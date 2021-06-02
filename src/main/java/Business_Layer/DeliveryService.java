@@ -1,108 +1,132 @@
 package Business_Layer;
 
+import Data_Layer.Account;
 import Presentation_Layer.AdministratorGUI;
 import Presentation_Layer.ClientGUI;
+import Presentation_Layer.EmployeeGUI;
+import Presentation_Layer.LoginGUI;
 
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
+/**@invatiant isWellFormed() */
+
+/** Clasa principala care leaga restul claselor intre ele*/
 public class DeliveryService extends Observable implements IDeliveryServiceProcessing,Serializable{
+    //private static final long serialVersionUID = -5947938895461248815L;
 
+    /** Tine info despre comenzi, asociez comanda cu prod. din comanda */
     public HashMap<Order, ArrayList<MenuItem>> orderInformations;
+    /** Tine info despre produsele aflate in meniu */
     public HashMap<Integer, MenuItem> products, productsFiltred;
-    private HashMap<Integer, Integer> productsOrderCount;
-    private ArrayList<MenuItem> productsForComposite, currentOrderProducts;
-    private Order currentOrder;
-    private Integer numberOfOrders;
-    private Integer currentClient;
+    /** Tine info despre  produsele care urmeaza sa formeze un prod. compus / Tine info despre produsele afltate in comanda curenta */
+    public ArrayList<MenuItem> productsForComposite, currentOrderProducts;
+    /** Tine info despre conturile clientilor*/
+    public HashMap<Integer, Account> clients;
+    /** Tine info despre comanda curenta*/
+    public Order currentOrder;
+    /** Numarul total de comenzi */
+    public Integer numberOfOrders;
+    /** Id-ul clientului care urmeaza sa faca comanda*/
+    public Integer cl;
 
 
+
+
+    /** Constructorul clasei */
     public DeliveryService(){
-
         orderInformations = new HashMap<>();
         products = new HashMap<>();
         productsFiltred = new HashMap<>();
-        currentClient = 0;
         numberOfOrders = 0;
-        //productsOrderCount = new HashMap<>();
+        productsForComposite = new ArrayList<>();
+        currentOrderProducts = new ArrayList<>();
+        clients = new HashMap<>();
+        cl = 0;
 
     }
 
+    public boolean isWellFormed(){
+        if(orderInformations == null || products == null)
+            return false;
+        return true;
+    }
+
+
+    /** Verifica daca un produs se afla in meniu*/
     public boolean isInMenu(MenuItem product){
         return products.containsKey(product.hashCode());
     }
 
-    private void placeOrder(){
+    /** Metoda cu ajutorul careia se plaseaza o comanda */
+    public void placeOrder(){
         try{
-            currentOrder = new Order(numberOfOrders++, currentClient++, new Date(System.currentTimeMillis()));
+            currentOrder = new Order(numberOfOrders++, cl++, new Date(System.currentTimeMillis()), orderPrice(currentOrderProducts));
             orderInformations.put(currentOrder, currentOrderProducts);
             Data_Layer.FileWriter.generateBill(currentOrder, orderInformations);
             setChanged();
             notifyObservers(currentOrder);
-            clearOrder();
-
+            currentOrderProducts = new ArrayList<>();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    private void addToOrder(MenuItem product){
+    /** Metoda care adauga produse la comanda curenta*/
+    public void addToOrder(MenuItem product){
         currentOrderProducts.add(product);
-        productsOrderCount.replace(product.hashCode(), productsOrderCount.get(product.hashCode()) + 1);
     }
 
-    private void clearOrder(){
-        currentOrderProducts = new ArrayList<>();
-    }
-
+    /** Metoda care actualizeaza hashmap-ul de produse*/
     private void updateHashTables(MenuItem m){
         products.put(m.hashCode(), m);
     }
 
-    private void addObs(JFrame frame){
-        this.addObserver((Observer) frame);
-    }
 
     @Override
     public void addProduct(MenuItem product){
         assert product != null;
+        assert  isWellFormed();
         if(!isInMenu(product)) {
             updateHashTables(product);
         }
         else{
             System.out.println(product.toString() + " se afla deja in menu!\n");
         }
+        assert isInMenu(product);
     }
 
     @Override
     public void editProduct(MenuItem product, MenuItem newProduct){
         assert product != null; assert newProduct != null;
+        assert  isWellFormed();
         if(isInMenu(product)){
-            products.put(newProduct.hashCode(), newProduct);
-            deleteProduct(product);
+            products.remove(product.hashCode());
+            addProduct(newProduct);
         }
-        assert product != newProduct;
+
     }
 
     @Override
     public void deleteProduct(MenuItem product){
         assert product != null;
         if(isInMenu(product)){
-            products.remove(product.hashCode(), product);
+            products.remove(product.hashCode());
         }
+        else{
+            System.out.println(product.toString() + " nu se poate sterge!\n");
+        }
+        assert !isInMenu(product);
     }
 
     @Override
-    public int computeOrderPrice(ArrayList<MenuItem> currentOrder){
+    public int orderPrice(ArrayList<MenuItem> currentOrder){
         assert currentOrder != null;
         int result = currentOrder.stream().map(MenuItem::computePrice).reduce(0, Integer::sum);
         assert result >= 0;
@@ -130,26 +154,24 @@ public class DeliveryService extends Observable implements IDeliveryServiceProce
         for(MenuItem product : products) {
             if(!isInMenu(product)) {
                 updateHashTables(product);
-                System.out.println(product);
             }
         }
-
     }
 
     @Override
     public Map<Integer, MenuItem> findProduct(String crt, String filter){
         switch (crt) {
-            case "title":
+            case "Title":
                 return products.values().stream().filter(p -> p.computeTitle().contains(filter)).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
-            case "rating":
+            case "Rating":
                 return products.values().stream().filter(p -> p.computeRating().equals(Double.parseDouble(filter))).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
-            case "calories":
+            case "Calories":
                 return products.values().stream().filter(p -> p.computeNumberOfCalories().equals(Integer.parseInt(filter))).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
-            case "proteins":
+            case "Proteins":
                 return products.values().stream().filter(p -> p.computeNumberOfProteins().equals(Integer.parseInt(filter))).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
-            case "fats":
+            case "Fats":
                 return products.values().stream().filter(p -> p.computeNumberOfFats().equals(Integer.parseInt(filter))).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
-            case "sodium":
+            case "Sodium":
                 return products.values().stream().filter(p -> p.computeNumberOfSodium().equals(Integer.parseInt(filter))).collect(Collectors.toMap(MenuItem::hashCode, p -> p));
             default:
                 System.out.println("Criterul de cautare este invalid");

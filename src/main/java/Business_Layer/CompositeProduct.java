@@ -18,14 +18,6 @@ public class CompositeProduct extends MenuItem {
         this.menuItems.addAll(menuItems);
     }
 
-    public void add(MenuItem menuItem){
-        menuItems.add(menuItem);
-    }
-
-    public void remove(MenuItem menuItem){
-        menuItems.remove(menuItem);
-    }
-
    /* @Override
     public Double computeRating() {
         Double rating = new Double(0);

@@ -1,6 +1,7 @@
 package Business_Layer;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public abstract class MenuItem implements Serializable {
     private String title;
@@ -53,15 +54,7 @@ public abstract class MenuItem implements Serializable {
 
     @Override
     public int hashCode(){
-        int result = 10;
-        result = 31 * result + title.hashCode();
-        result = 31 * result + rating.hashCode();
-        result = 31 * result + calories.hashCode();
-        result = 31 * result + protein.hashCode();
-        result = 31 * result + fat.hashCode();
-        result = 31 * result + sodium.hashCode();
-        result = 31 * result + price.hashCode();
-        return result;
+        return Objects.hash(title, price, rating, calories, protein, fat, sodium);
     }
 
     public String toString(){

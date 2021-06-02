@@ -1,8 +1,9 @@
 package Presentation_Layer;
 
-import Business_Layer.BaseProduct;
-import Business_Layer.DeliveryService;
+import Business_Layer.*;
 import Business_Layer.MenuItem;
+import Data_Layer.FileWriter;
+import Data_Layer.Reports;
 import Data_Layer.Serializator;
 
 import javax.swing.*;
@@ -12,19 +13,12 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class AdministratorGUI extends JFrame {
-    public AdministratorGUI(){
-       // new LoginGUI();
-       // this.products = products;
-        initializePanel();
-    }
 
-    public void LoginGUI(){
-
-    }
-
+    private static final long serialVersionUID = 1493350527497397524L;
 
     private JPanel contentPane;
     private JTable tableAdmin;
@@ -44,18 +38,21 @@ public class AdministratorGUI extends JFrame {
     private JTextField textFieldPriceEditP;
     private JTextField textFieldProductsOrderedMoreThan;
     private JTextField textFieldProductsOrderedIn;
-    private JTextField textFieldCompositeP;
+    private JTextField textFieldTitleComposite;
+    private JTextField textFieldClientsWithAtLeast;
+    private JTextField textFieldPriceMin;
     private JScrollPane scrollPaneTabelAdmin;
-    DeliveryService ds = new DeliveryService();
-    //private HashMap<Integer, MenuItem> products;
+    private DefaultTableModel tableModel;
+    DeliveryService ds;
 
+
+    public AdministratorGUI(DeliveryService ds){
+        this.ds = ds;
+        initializePanel();
+    }
 
     public void createTable(HashMap<Integer, MenuItem> products){
-        String[] coloane = {"Title", "Rating", "Calories", "Proteins", "Fats", "Sodium", "Price"};
-        DefaultTableModel tableModel = new DefaultTableModel(coloane, 0);
         tableModel.setRowCount(0);
-        tableAdmin = new JTable((tableModel));
-        tableAdmin.setBounds(21, 360, 637, 483);
         if(products!=null) {
             for (Integer x : products.keySet()) {
                 MenuItem menuItem = products.get(x);
@@ -64,34 +61,37 @@ public class AdministratorGUI extends JFrame {
                 menuItem.computePrice()};
                 tableModel.addRow(arr);
             }
-            scrollPaneTabelAdmin = new JScrollPane(tableAdmin);
-            scrollPaneTabelAdmin.setBounds(21, 360, 637, 483);
-            scrollPaneTabelAdmin.setViewportView(tableAdmin);
-            contentPane.add(scrollPaneTabelAdmin);
+
         }
 
     }
 
-    public DeliveryService getDs(){
-        return ds;
-    }
 
     public void initializePanel(){
         setTitle("Administrator");
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 1000, 873);
         contentPane = new JPanel();
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setContentPane(contentPane);
         contentPane.setLayout(null);
 
-       // createTable(products);
+        String[] coloane = {"Title", "Rating", "Calories", "Proteins", "Fats", "Sodium", "Price"};
+        tableModel = new DefaultTableModel(coloane, 0);
+        tableModel.setRowCount(0);
+        tableAdmin = new JTable((tableModel));
+        tableAdmin.setBounds(21, 360, 637, 483);
+
+        scrollPaneTabelAdmin = new JScrollPane(tableAdmin);
+        scrollPaneTabelAdmin.setBounds(21, 360, 637, 483);
+        scrollPaneTabelAdmin.setViewportView(tableAdmin);
+        contentPane.add(scrollPaneTabelAdmin);
 
         JButton btnImportProducts = new JButton("Import products");
         btnImportProducts.setBounds(46, 12, 157, 25);
         btnImportProducts.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent arg0) {
                 ds.importProducts();
+                contentPane.remove(tableAdmin);
                 createTable(ds.products);
             }
         });
@@ -103,8 +103,17 @@ public class AdministratorGUI extends JFrame {
             BaseProduct product = new BaseProduct(textFieldTitleAddP.getText(), Double.parseDouble(textFieldRatingAddP.getText()),
                     Integer.parseInt(textFieldCaloriesAddP.getText()), Integer.parseInt(textFieldProteinsAddP.getText()),Integer.parseInt(textFieldFatsAddP.getText()),
                     Integer.parseInt(textFieldSodiumAddP.getText()),Integer.parseInt(textFieldPriceAddP.getText()));
+            assert ds != null;
+            if(tableAdmin != null) {
+                DefaultTableModel model = (DefaultTableModel) tableAdmin.getModel();
+                model.addRow(new Object[]{textFieldTitleAddP.getText(), textFieldRatingAddP.getText(), textFieldCaloriesAddP.getText(),
+                        textFieldProteinsAddP.getText(), textFieldFatsAddP.getText(), textFieldSodiumAddP.getText(), textFieldPriceAddP.getText()});
+            }else{
+                contentPane.remove(tableAdmin);
+                createTable(ds.products);
+            }
             ds.addProduct(product);
-            createTable(ds.products);
+
         });
         contentPane.add(btnAddProduct);
 
@@ -112,7 +121,7 @@ public class AdministratorGUI extends JFrame {
         JButton btnSaveAdmin = new JButton("Save info");
         btnSaveAdmin.setBounds(700, 102, 148, 25);
         btnSaveAdmin.addActionListener(arg0 -> {
-            Serializator.save(ds);
+            Serializator.save("DeliveryService.ser", ds);
         });
         contentPane.add(btnSaveAdmin);
 
@@ -120,8 +129,9 @@ public class AdministratorGUI extends JFrame {
         JButton btnLoadAdmin = new JButton("Load info");
         btnLoadAdmin.setBounds(700, 190, 148, 25);
         btnLoadAdmin.addActionListener(arg0 -> {
-            ds = Serializator.load();
+            ds = (DeliveryService) Serializator.load("DeliveryService.ser");
             assert ds != null;
+            contentPane.remove(tableAdmin);
             createTable(ds.products);
         });
         contentPane.add(btnLoadAdmin);
@@ -132,7 +142,6 @@ public class AdministratorGUI extends JFrame {
             BaseProduct newProduct = new BaseProduct(textFieldTitleEditP.getText(), Double.parseDouble(textFieldRatingEditP.getText()),
                     Integer.parseInt(textFieldCaloriesEditP.getText()), Integer.parseInt(textFieldProteinsEditP.getText()),Integer.parseInt(textFieldFatsEditP.getText()),
                     Integer.parseInt(textFieldSodiumEditP.getText()),Integer.parseInt(textFieldPriceEditP.getText()));
-            //createTable(ds.products);
             DefaultTableModel model = (DefaultTableModel)tableAdmin.getModel();
             int selectedRowIndex = tableAdmin.getSelectedRow();
             String title = model.getValueAt(selectedRowIndex, 0).toString();
@@ -143,8 +152,14 @@ public class AdministratorGUI extends JFrame {
             Integer sodium = Integer.parseInt(model.getValueAt(selectedRowIndex, 5).toString());
             Integer price = Integer.parseInt(model.getValueAt(selectedRowIndex, 6).toString());
             BaseProduct oldProduct = new BaseProduct(title, rating, calories, proteins, fats, sodium, price);
+            model.setValueAt(newProduct.computeTitle(),selectedRowIndex, 0);
+            model.setValueAt(newProduct.computeRating(),selectedRowIndex, 1);
+            model.setValueAt(newProduct.computeNumberOfCalories(),selectedRowIndex, 2);
+            model.setValueAt(newProduct.computeNumberOfProteins(),selectedRowIndex, 3);
+            model.setValueAt(newProduct.computeNumberOfFats(),selectedRowIndex, 4);
+            model.setValueAt(newProduct.computeNumberOfSodium(),selectedRowIndex, 5);
+            model.setValueAt(newProduct.computePrice(),selectedRowIndex, 6);
             ds.editProduct(oldProduct,newProduct);
-            createTable(ds.products);
         });
         contentPane.add(btnEditProduct);
 
@@ -161,26 +176,94 @@ public class AdministratorGUI extends JFrame {
             Integer sodium = Integer.parseInt(model.getValueAt(selectedRowIndex, 5).toString());
             Integer price = Integer.parseInt(model.getValueAt(selectedRowIndex, 6).toString());
             BaseProduct toDeleteProduct = new BaseProduct(title, rating, calories, proteins, fats, sodium, price);
+            model.removeRow(tableAdmin.getSelectedRow());
             ds.deleteProduct(toDeleteProduct);
-            createTable(ds.products);
         });
         contentPane.add(btnDeleteProduct);
 
-        JButton btnGenerateReports = new JButton("Generate reports");
-        btnGenerateReports.setBounds(762, 711, 168, 25);
-        contentPane.add(btnGenerateReports);
-
-        String[] genR = {"First", "Second", "Third"};
+        String[] genR = {"First", "Second", "Third", "Fourth"};
         JComboBox comboBoxGenerateReports = new JComboBox(genR);
-        comboBoxGenerateReports.setBounds(762, 662, 159, 24);
+        comboBoxGenerateReports.setBounds(774, 694, 159, 24);
         contentPane.add(comboBoxGenerateReports);
+
+        String[] minH = {"00", "01","02", "03","04", "05","06", "07", "08", "09", "10", "11","12", "13","14", "15", "16", "17", "18", "19"};
+        JComboBox comboBoxMinTime = new JComboBox(minH);
+        comboBoxMinTime.setBounds(783, 387, 50, 40);
+        contentPane.add(comboBoxMinTime);
+
+        String[] maxH = {"00", "01","02", "03","04", "05","06", "07", "08", "09", "10", "11","12", "13","14", "15", "16", "17", "18", "19"};
+        JComboBox comboBoxMaxTime = new JComboBox(maxH);
+        comboBoxMaxTime.setBounds(858, 387, 50, 40);
+        contentPane.add(comboBoxMaxTime);
+
+        textFieldProductsOrderedMoreThan = new JTextField();
+        textFieldProductsOrderedMoreThan.setBounds(833, 481, 37, 19);
+        contentPane.add(textFieldProductsOrderedMoreThan);
+        textFieldProductsOrderedMoreThan.setColumns(10);
+
+        textFieldProductsOrderedIn = new JTextField();
+        textFieldProductsOrderedIn.setColumns(10);
+        textFieldProductsOrderedIn.setBounds(811, 560, 103, 19);
+        contentPane.add(textFieldProductsOrderedIn);
+
+        textFieldClientsWithAtLeast = new JTextField();
+        textFieldClientsWithAtLeast.setBounds(884, 615, 32, 19);
+        contentPane.add(textFieldClientsWithAtLeast);
+        textFieldClientsWithAtLeast.setColumns(10);
+
+        JButton btnGenerateReports = new JButton("Generate reports");
+        btnGenerateReports.setBounds(765, 730, 168, 25);
+        btnGenerateReports.addActionListener(arg0 -> {
+            String filter = Objects.requireNonNull(comboBoxGenerateReports.getSelectedItem()).toString();
+            if(filter.equals("First")){
+                 Reports.generateReport1(Integer.parseInt(Objects.requireNonNull(comboBoxMinTime.getSelectedItem()).toString()),
+                         Integer.parseInt(Objects.requireNonNull(comboBoxMaxTime.getSelectedItem()).toString()), ds.orderInformations);
+            }else if(filter.equals("Second")){
+                Reports.generateReport2(Integer.parseInt(textFieldProductsOrderedMoreThan.getText()), ds.products, ds.orderInformations);
+            }else if(filter.equals("Third")){
+                Reports.generateReport4(Integer.parseInt(textFieldProductsOrderedIn.getText()),ds.orderInformations);
+            }else if(filter.equals("Fourth")){
+                Reports.generateReport3(Integer.parseInt(textFieldClientsWithAtLeast.getText()),ds.orderInformations);
+            }
+        });
+        contentPane.add(btnGenerateReports);
 
         JButton btnCreateProduct = new JButton("Create product");
         btnCreateProduct.setBounds(220, 309, 157, 25);
+        btnCreateProduct.addActionListener(arg0 -> {
+            CompositeProduct cp = new CompositeProduct(textFieldTitleComposite.getText(),ds.productsForComposite);
+            ds.productsForComposite = new ArrayList<>();
+            ds.addProduct(cp);
+            DefaultTableModel model = (DefaultTableModel)tableAdmin.getModel();
+            model.addRow(new Object[]{cp.computeTitle(), cp.computeRating(), cp.computeNumberOfCalories(),
+                    cp.computeNumberOfProteins(), cp.computeNumberOfFats(), cp.computeNumberOfSodium(), cp.computePrice()});
+
+        });
         contentPane.add(btnCreateProduct);
 
+        JButton btnAddToComposite = new JButton("Add to composite");
+        btnAddToComposite.setBounds(450, 309, 157, 25);
+        btnAddToComposite.addActionListener(arg0 -> {
+            DefaultTableModel model = (DefaultTableModel)tableAdmin.getModel();
+            int selectedRowIndex = tableAdmin.getSelectedRow();
+            String title = model.getValueAt(selectedRowIndex, 0).toString();
+            Double rating = Double.parseDouble(model.getValueAt(selectedRowIndex, 1).toString());
+            Integer calories = Integer.parseInt(model.getValueAt(selectedRowIndex, 2).toString());
+            Integer proteins = Integer.parseInt(model.getValueAt(selectedRowIndex, 3).toString());
+            Integer fats = Integer.parseInt(model.getValueAt(selectedRowIndex, 4).toString());
+            Integer sodium = Integer.parseInt(model.getValueAt(selectedRowIndex, 5).toString());
+            Integer price = Integer.parseInt(model.getValueAt(selectedRowIndex, 6).toString());
+            BaseProduct toCompositeProduct = new BaseProduct(title, rating, calories, proteins, fats, sodium, price);
+            ds.productsForComposite.add(toCompositeProduct);
+        });
+        contentPane.add(btnAddToComposite);
+
         JButton btnLogoutAdmin = new JButton("Logout");
-        btnLogoutAdmin.setBounds(670, 766, 128, 25);
+        btnLogoutAdmin.setBounds(670, 781, 128, 25);
+        btnLogoutAdmin.addActionListener(arg0 -> {
+            setVisible(false);
+
+        });
         contentPane.add(btnLogoutAdmin);
 
         textFieldTitleAddP = new JTextField();
@@ -313,15 +396,6 @@ public class AdministratorGUI extends JFrame {
         lblTimeInterval.setBounds(800, 360, 114, 15);
         contentPane.add(lblTimeInterval);
 
-        String[] minH = {"00", "01","02", "03","04", "05","06", "07", "08", "09", "10", "11","12", "13","14", "15"};
-        JComboBox comboBoxMinTime = new JComboBox(minH);
-        comboBoxMinTime.setBounds(783, 387, 50, 40);
-        contentPane.add(comboBoxMinTime);
-
-        String[] maxH = {"00", "01","02", "03","04", "05","06", "07", "08", "09", "10", "11","12", "13","14", "15"};
-        JComboBox comboBoxMaxTime = new JComboBox(maxH);
-        comboBoxMaxTime.setBounds(858, 387, 50, 40);
-        contentPane.add(comboBoxMaxTime);
 
         JLabel label = new JLabel("-");
         label.setBounds(833, 387, 21, 15);
@@ -331,24 +405,32 @@ public class AdministratorGUI extends JFrame {
         lblProductsOrderedMore.setBounds(744, 454, 206, 15);
         contentPane.add(lblProductsOrderedMore);
 
-        textFieldProductsOrderedMoreThan = new JTextField();
-        textFieldProductsOrderedMoreThan.setBounds(833, 481, 37, 19);
-        contentPane.add(textFieldProductsOrderedMoreThan);
-        textFieldProductsOrderedMoreThan.setColumns(10);
 
-        JLabel lblProductsOrderedIn = new JLabel("Products ordered in(DD/MM/YYYY):");
-        lblProductsOrderedIn.setBounds(731, 527, 245, 15);
+        JLabel lblProductsOrderedIn = new JLabel("Products ordered in(1-Monday,...):");
+        lblProductsOrderedIn.setBounds(731, 533, 245, 15);
         contentPane.add(lblProductsOrderedIn);
 
-        textFieldProductsOrderedIn = new JTextField();
-        textFieldProductsOrderedIn.setColumns(10);
-        textFieldProductsOrderedIn.setBounds(811, 554, 103, 19);
-        contentPane.add(textFieldProductsOrderedIn);
+        JLabel lblClientsWithAt = new JLabel("Clients with at least: ");
+        lblClientsWithAt.setBounds(731, 615, 159, 15);
+        contentPane.add(lblClientsWithAt);
 
-        textFieldCompositeP = new JTextField();
-        textFieldCompositeP.setBounds(71, 312, 114, 19);
-        contentPane.add(textFieldCompositeP);
-        textFieldCompositeP.setColumns(10);
+        textFieldTitleComposite = new JTextField();
+        textFieldTitleComposite.setBounds(71, 312, 114, 19);
+        contentPane.add(textFieldTitleComposite);
+        textFieldTitleComposite.setColumns(10);
+
+        JLabel lblOrders = new JLabel("orders");
+        lblOrders.setBounds(918, 615, 70, 15);
+        contentPane.add(lblOrders);
+
+        JLabel lblPriceMin = new JLabel("price min: ");
+        lblPriceMin.setBounds(811, 646, 79, 15);
+        contentPane.add(lblPriceMin);
+
+        textFieldPriceMin = new JTextField();
+        textFieldPriceMin.setColumns(10);
+        textFieldPriceMin.setBounds(884, 644, 32, 19);
+        contentPane.add(textFieldPriceMin);
 
         JLabel lblNewTitle = new JLabel("New Title");
         lblNewTitle.setBounds(100, 295, 70, 15);

@@ -17,23 +17,26 @@ import java.util.Observer;
 public class EmployeeGUI  extends JFrame implements Observer {
     private JPanel contentPane;
     private JTable tableEmployee;
-    //private HashMap<Order, ArrayList<MenuItem>> orders;
-    private DeliveryService ds;
+    private DefaultTableModel tableModel;
+    private JScrollPane scrollPaneEmployee;
+    //private DeliveryService ds;
+    //private Order order;
 
 
     public EmployeeGUI(){
-        ds = new DeliveryService();
+       // this.ds = ds;
         initializePanel();
     }
 
     @Override
-    public void update(Observable o, Object arg) {
-        initializePanel();
-        JOptionPane.showMessageDialog(this, ((Order)arg).toString());
-
+    public void update(Observable o, Object order) {
+        System.out.println("AICI");
+        System.out.println(order.toString());
+        JOptionPane.showMessageDialog(this, order.toString());
     }
 
     private void initializePanel(){
+        //ds.addObs(this);
         setTitle("Employee");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 767, 416);
@@ -42,34 +45,37 @@ public class EmployeeGUI  extends JFrame implements Observer {
         setContentPane(contentPane);
         contentPane.setLayout(null);
 
+//        String[] coloane = {"Order ID","Client ID","Order Date"};
+//        tableModel = new DefaultTableModel(coloane, 0);
+//        tableModel.setRowCount(0);
+//        tableEmployee = new JTable((tableModel));
+//        tableEmployee.setBounds(12, 12, 564, 362);
+//
+//        scrollPaneEmployee = new JScrollPane(tableEmployee);
+//        scrollPaneEmployee.setBounds(12, 12, 564, 362);
+//        scrollPaneEmployee.setViewportView(tableEmployee);
+//        contentPane.add(scrollPaneEmployee);
 
-        createTable(ds.orderInformations);
-        //contentPane.add(tableEmployee);
 
         JButton btnLogoutEmployee = new JButton("Logout");
         btnLogoutEmployee.setBounds(616, 320, 117, 25);
+        btnLogoutEmployee.addActionListener(arg0 ->{
+            setVisible(false);
+        });
         contentPane.add(btnLogoutEmployee);
 
 
 
     }
 
-    public void createTable(HashMap<Order, ArrayList<MenuItem>> orders){
-        String[] coloane = {"Order ID","Client ID","Order Date"};
-        DefaultTableModel tableModel = new DefaultTableModel(coloane, 0);
-        tableModel.setRowCount(0);
-        tableEmployee = new JTable((tableModel));
-        tableEmployee.setBounds(12, 12, 564, 362);
-        if(orders != null){
-            for(Order o : orders.keySet()){
-                Object[] x = {o.getOrderID(), o.getClientID(), o.getOrderDate()};
-                tableModel.addRow(x);
-            }
-        }
-        JScrollPane scrollPaneEmployee = new JScrollPane(tableEmployee);
-        scrollPaneEmployee.setBounds(12, 12, 564, 362);
-        scrollPaneEmployee.setViewportView(tableEmployee);
-        contentPane.add(scrollPaneEmployee);
-    }
+//    public void createTable(HashMap<Order, ArrayList<MenuItem>> orders){
+//        tableModel.setRowCount(0);
+//        if(orders != null){
+//            for(Order o : orders.keySet()){
+//                Object[] x = {o.getOrderID(), o.getClientID(), o.getOrderDate()};
+//                tableModel.addRow(x);
+//            }
+//        }
+//    }
 
 }
