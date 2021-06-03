@@ -13,7 +13,8 @@ public class CompositeProduct extends MenuItem {
                 menuItems.stream().map(MenuItem::computeNumberOfProteins).reduce(0, Integer::sum),
                 menuItems.stream().map(MenuItem::computeNumberOfFats).reduce(0, Integer::sum),
                 menuItems.stream().map(MenuItem::computeNumberOfSodium).reduce(0, Integer::sum),
-                menuItems.stream().map(MenuItem::computePrice).reduce(0, Integer::sum));
+                menuItems.stream().map(MenuItem::computePrice).reduce(0, Integer::sum)
+        );
         this.menuItems = new ArrayList<>();
         this.menuItems.addAll(menuItems);
     }

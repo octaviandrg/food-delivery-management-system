@@ -17,12 +17,5 @@ public class App
 {
     public static void main( String[] args ) throws IOException {
         new LoginGUI();
-        //AdministratorGUI frameAdmin = new AdministratorGUI();
-        //frameAdmin.setVisible(true);
-        //ClientGUI frameClient = new ClientGUI();
-        //frameClient.setVisible(true);
-        //EmployeeGUI frameEmployee = new EmployeeGUI();
-        //frameEmployee.setVisible(true);
-
     }
 }

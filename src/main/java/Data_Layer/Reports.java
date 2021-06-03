@@ -20,12 +20,7 @@ public class Reports {
      */
     public static void generateReport1(int minHour, int maxHour, HashMap<Order, ArrayList<MenuItem>> orderInfo) {
         assert minHour < maxHour;
-        Integer filterResult = Math.toIntExact(orderInfo.entrySet().
-                stream().
-                filter(x ->  x.getKey().getOrderDate().getHours() >= minHour &&
-                        x.getKey().getOrderDate().getHours() <= maxHour).
-                map(x -> x.getValue()).collect(Collectors.toList()).stream().count());
-
+        Integer filterResult = Math.toIntExact(orderInfo.entrySet().stream().filter(x ->  x.getKey().getOrderDate().getHours() >= minHour && x.getKey().getOrderDate().getHours() <= maxHour).map(x -> x.getValue()).collect(Collectors.toList()).stream().count());
         String report = "There have been placed " + filterResult + " orders!";
         FileWriter.generateReportFile1(report);
     }
@@ -40,10 +35,7 @@ public class Reports {
     public static void generateReport2(int k, HashMap<Integer, MenuItem> products, HashMap<Order, ArrayList<MenuItem>> orderInfo) {
         assert k >= 0;
         String report = "";
-        Map<Integer, Long> result = orderInfo.entrySet().stream().map(x -> x.getValue()).
-                reduce(new ArrayList<>(), (x, y) -> { x.addAll(y); return x; }).
-                stream().
-                collect(Collectors.groupingBy(MenuItem::hashCode, Collectors.counting()));
+        Map<Integer, Long> result = orderInfo.entrySet().stream().map(x -> x.getValue()).reduce(new ArrayList<>(), (x, y) -> { x.addAll(y); return x; }).stream().collect(Collectors.groupingBy(MenuItem::hashCode, Collectors.counting()));
         for(Integer itemId: result.keySet()) {
             if (result.get(itemId) >= k) {
                 report += products.get(itemId).toString() + "\n";
@@ -61,9 +53,7 @@ public class Reports {
     public static void generateReport3(int k, HashMap<Order, ArrayList<MenuItem>> orderInfo) {
         assert k >= 0;
         String report = "";
-        Map<Integer, Long> result = orderInfo.entrySet().
-                stream().map(x -> x.getKey()).
-                collect(Collectors.groupingBy(Order::getClientID, Collectors.counting()));
+        Map<Integer, Long> result = orderInfo.entrySet().stream().map(x -> x.getKey()).collect(Collectors.groupingBy(Order::getClientID, Collectors.counting()));
         for(Integer clientId: result.keySet()) {
             if (result.get(clientId) >= k) {
                 report += "Client n." + clientId + "\n";
@@ -82,14 +72,7 @@ public class Reports {
         assert day >= 1 && day <= 7;
         day = day % 7 + 1;
         int finalDay = day;
-        List<MenuItem> result = orderInfo.entrySet().
-                stream().
-                filter(x -> x.getKey().getOrderDate().getDay() == finalDay).
-                map(Map.Entry::getValue).
-                reduce(new ArrayList<>(), (x, y) -> { x.addAll(y); return x; }).
-                stream().
-                distinct().
-                collect(Collectors.toList());
+        List<MenuItem> result = orderInfo.entrySet().stream().filter(x -> x.getKey().getOrderDate().getDay() == finalDay).map(Map.Entry::getValue).reduce(new ArrayList<>(), (x, y) -> { x.addAll(y); return x; }).stream().distinct().collect(Collectors.toList());
         String report = "";
         for(MenuItem menuItem: result) {
             report += menuItem + "\n";

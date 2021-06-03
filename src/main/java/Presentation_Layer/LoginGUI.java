@@ -16,23 +16,21 @@ public class LoginGUI extends JFrame {
     private JTextField textFieldPass;
     public Integer currentClientId;
     DeliveryService ds;
-    public LoginGUI(){
-        initializePanel();
-        setVisible(true);
+
+    public LoginGUI() {
+
         ds = new DeliveryService();
         frameAdmin = new AdministratorGUI(ds);
         frameClient = new ClientGUI(ds);
         frameEmployee = new EmployeeGUI();
-        ds.addObserver((frameEmployee));
+        ds.addObserver(frameEmployee);
+        initializePanel();
+        setVisible(true);
 
     }
 
-    public int getCurrentClientId(){
-        return currentClientId;
-    }
 
-
-    public void initializePanel(){
+    public void initializePanel() {
         setTitle("FOOD DELIVERY MANAGEMENT SYSTEM");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 440, 140);
@@ -60,23 +58,21 @@ public class LoginGUI extends JFrame {
         textFieldPass.setColumns(10);
 
 
-
         JButton btnLogin = new JButton("LOGIN");
         btnLogin.addActionListener(arg0 -> {
             String user = textFieldUser.getText();
             String pass = textFieldPass.getText();
-            if(user.equals("admin") && pass.equals("admin")){
+            if (user.equals("admin") && pass.equals("admin")) {
                 frameAdmin.setVisible(true);
                 JOptionPane.showMessageDialog(this, "Welcome, admin!");
-            }else
-            if(user.equals("employee") && pass.equals("employee")){
+            } else if (user.equals("employee") && pass.equals("employee")) {
                 frameAdmin.setVisible(false);
                 frameEmployee.setVisible(true);
                 JOptionPane.showMessageDialog(this, "Welcome, employee!");
-            }else {
+            } else {
                 boolean exista = false;
-                for (Account account : ds.clients.values()){
-                    if(account.getUser().equals(user) && account.getPass().equals(pass)){
+                for (Account account : ds.clients.values()) {
+                    if (account.getUser().equals(user) && account.getPass().equals(pass)) {
                         JOptionPane.showMessageDialog(this, "Welcome, " + account.getUser() + "!");
                         frameAdmin.setVisible(false);
                         frameClient.setVisible(true);
@@ -85,7 +81,8 @@ public class LoginGUI extends JFrame {
                         exista = true;
                         currentClientId = account.getId();
                     }
-                } if(!exista){
+                }
+                if (!exista) {
                     JOptionPane.showMessageDialog(this, "Wrong user / pass!");
                 }
 
@@ -99,11 +96,17 @@ public class LoginGUI extends JFrame {
         btnRegister.addActionListener(arg0 -> {
             String user = textFieldUser.getText();
             String pass = textFieldPass.getText();
-            Account newClient = new Account(user,pass);
+            Account newClient = new Account(user, pass);
             ds.clients.put(newClient.hashCode(), newClient);
         });
         loginPanel.add(btnRegister);
 
 
     }
+
+
+    public int getCurrentClientId() {
+        return currentClientId;
+    }
+
 }
